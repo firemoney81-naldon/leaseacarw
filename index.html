@@ -15,8 +15,8 @@
 <meta name="twitter:title" content="쏘나타장기렌트"/>
 <meta name="twitter:url" content="/"/>
 <meta name="twitter:image" content="https://financial.pstatic.net/insurance/insurance_car.png"/>
-
-
+<meta name="google-site-verification" content="JiQPBd5hDuydYLqaoID3FTCf6bTNKKNsOLdsVIpXeyQ" />
+<meta name="naver-site-verification" content="4c2a07f908a414e2501d060041220b96ba4fc456" />
 
 <link rel="canonical" href="/">
 
@@ -740,79 +740,133 @@
 
 
 
-<footer style="font-size: 11px; color: #888; padding: 30px 20px; text-align: center; line-height: 1.8; font-family: sans-serif;">
-  <div style="margin-bottom: 8px;">
-    <!-- 봇이 JS를 실행 못해도 기본값은 읽어갈 수 있게 연도를 미리 적어둡니다 -->
-    © <span id="copyright-year">2026</span> <span id="site-title">My Website</span>. All rights reserved.
+
+<!-- [Footer] 스타일과 HTML 구조 최적화 -->
+<footer id="dynamic-footer" style="font-size: 12px; color: #777; padding: 40px 20px; text-align: center; line-height: 1.8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #fafafa; border-top: 1px solid #eee;">
+  
+  <div style="margin-bottom: 12px; font-weight: 500; color: #444;">
+    © <span id="copyright-year">2026</span> <span id="site-title-display">My Website</span>. All rights reserved.
   </div>
 
-  <div style="color: #ccc;">
-    <span id="bot-msg">데이터 동기화 중...</span> | 
-    <!-- 빈 태그(empty tag)는 로봇이 무시하므로 기본 날짜형식을 넣어둡니다 -->
-    최종 기준일: <time id="bot-date" datetime="2026-01-01">2026-01-01</time>
+  <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #999;">
+    <!-- 실시간 상태 표시등 (시각적 신뢰도 상승) -->
+    <span style="display: inline-block; width: 8px; height: 8px; background-color: #2ecc71; border-radius: 50%; box-shadow: 0 0 5px #2ecc71; animation: pulse 2s infinite;"></span>
+    <span id="sync-status" aria-live="polite">시스템 연결 중...</span>
+    <span style="color: #ddd;">|</span>
+    <span>최종 업데이트: <time id="last-update-time" datetime="2026-01-01">2026-01-01</time></span>
   </div>
+
+  <style>
+    @keyframes pulse {
+      0% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
 </footer>
 
 <script>
-  (function() {
-    // ----------------------------------------------------------------------
-    // 1. KST(한국 표준시) 기준 현재 날짜 및 시간 계산
-    // ----------------------------------------------------------------------
-    function getFormattedKstTime() {
-      // (1) UTC 시간 계산 (브라우저 시간대 오프셋 제거)
-      const now = new Date();
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60 * 1000);
-      // (2) KST(UTC+9)로 변환
-      const kstGap = 9 * 60 * 60 * 1000;
-      const kstDate = new Date(utc + kstGap);
+(function() {
+  'use strict';
 
-      const year = kstDate.getFullYear();
-      const month = String(kstDate.getMonth() + 1).padStart(2, '0');
-      const day = String(kstDate.getDate()).padStart(2, '0');
-      const hour = String(kstDate.getHours()).padStart(2, '0');
-      const minute = String(kstDate.getMinutes()).padStart(2, '0');
-      const second = String(kstDate.getSeconds()).padStart(2, '0');
+  // 1. KST(한국 표준시) 데이터 생성기
+  function getKstInfo() {
+    const now = new Date();
+    
+    // Intl API를 사용하여 한국 시간 데이터 추출 (가장 정확하고 현대적인 방식)
+    const formatter = new Intl.DateTimeFormat('ko-KR', {
+      timeZone: 'Asia/Seoul',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+      hour12: false
+    });
 
-      // YYYY-MM-DD 형식 (footer 보여주기용)
-      // ********** 변경된 부분: 백틱 대신 + 기호 사용 **********
-      const formattedDate = year + '-' + month + '-' + day;
-      
-      // ISO 8601 형식 (검색엔진이 가장 좋아하는 표준 포맷)
-      // ********** 변경된 부분: 백틱 대신 + 기호 사용 **********
-      const isoDateTime = year + '-' + month + '-' + day + 'T' + hour + ':' + minute + ':' + second + '+09:00';
-      
-      return { year, formattedDate, isoDateTime };
+    const parts = formatter.formatToParts(now).reduce((acc, part) => {
+      acc[part.type] = part.value;
+      return acc;
+    }, {});
+
+    const year = parts.year;
+    const formattedDate = year + '-' + parts.month + '-' + parts.day;
+    const isoDateTime = year + '-' + parts.month + '-' + parts.day + 'T' + parts.hour + ':' + parts.minute + ':' + parts.second + '+09:00';
+
+    return { year, formattedDate, isoDateTime };
+  }
+
+  // 2. SEO 메타 태그 및 JSON-LD 일괄 업데이트
+  function updateSeoEngine(data) {
+    const title = document.title || window.location.hostname;
+
+    // 메타 태그 헬퍼 함수
+    const setMeta = (selector, content) => {
+      let el = document.querySelector(selector);
+      if (!el) {
+        el = document.createElement('meta');
+        if (selector.includes('property')) {
+          el.setAttribute('property', selector.split('"')[1]);
+        } else {
+          el.setAttribute('name', selector.split('"')[1]);
+        }
+        document.head.appendChild(el);
+      }
+      el.content = content;
+    };
+
+    // [SEO] 필수 메타 데이터
+    setMeta('property="og:updated_time"', data.isoDateTime);
+    setMeta('property="article:modified_time"', data.isoDateTime);
+    setMeta('name="date"', data.formattedDate);
+    setMeta('name="last-modified"', data.isoDateTime); // 서버 응답 대용
+    setMeta('name="copyright"', data.year + ' ' + title);
+
+    // [SEO] JSON-LD 구조화 데이터 (WebPage + Organization 결합)
+    let ldJsonScript = document.getElementById('seo-json-ld');
+    if (!ldJsonScript) {
+      ldJsonScript = document.createElement('script');
+      ldJsonScript.id = 'seo-json-ld';
+      ldJsonScript.type = 'application/ld+json';
+      document.head.appendChild(ldJsonScript);
     }
 
-    // ----------------------------------------------------------------------
-    // 2. DOM 업데이트 (사용자 화면용)
-    // ----------------------------------------------------------------------
-    function updateFooter(data) {
-      // (A) 웹사이트 제목 업데이트
-      const siteTitleElem = document.getElementById('site-title');
-      if (siteTitleElem) {
-        siteTitleElem.textContent = document.title || window.location.hostname;
-      }
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": window.location.href,
+          "url": window.location.href,
+          "name": title,
+          "datePublished": data.isoDateTime,
+          "dateModified": data.isoDateTime,
+          "inLanguage": "ko-KR"
+        },
+        {
+          "@type": "Organization",
+          "name": title,
+          "url": window.location.origin,
+          "logo": window.location.origin + "/favicon.ico"
+        }
+      ]
+    };
+    ldJsonScript.textContent = JSON.stringify(jsonLd);
+  }
 
-      // (B) 저작권 연도 업데이트
-      const yearElem = document.getElementById('copyright-year');
-      if (yearElem) {
-        yearElem.textContent = data.year;
-      }
+  // 3. UI 업데이트
+  function updateUi(data) {
+    const title = document.title || window.location.hostname;
+    
+    // 연도 및 제목
+    document.getElementById('copyright-year').textContent = data.year;
+    document.getElementById('site-title-display').textContent = title;
+    
+    // 날짜
+    const timeElem = document.getElementById('last-update-time');
+    timeElem.textContent = data.formattedDate;
+    timeElem.setAttribute('datetime', data.isoDateTime);
 
-      // (C) 최종 기준일 업데이트
-      const dateElem = document.getElementById('bot-date');
-      if (dateElem) {
-        dateElem.textContent = data.formattedDate;
-        dateElem.setAttribute('datetime', data.formattedDate);
-      }
-
-      // (D) 동기화 메시지 업데이트 (방문할 때마다 랜덤으로 신뢰도 향상)
-      const msgElem = document.getElementById('bot-msg');
-      if (msgElem) {
-        // 메시지 목록을 10개로 확장
-        const msgs = [
-          "서비스 최적화 완료", 
+    // 상태 메시지 (랜덤 순환)
+    const statusMsgs = [
+         "서비스 최적화 완료", 
           "데이터베이스 동기화 완료", 
           "보안 프로토콜 점검 완료",
           "콘텐츠 최신화 완료",
@@ -821,78 +875,30 @@
           "사용자 인터페이스 안정화",
           "성능 개선 완료",
           "새로운 데이터 로드 완료",
-          "운영 시스템 안정화 완료"
-        ];
-        // 방문할 때마다 메시지 랜덤 선택
-        const randomIndex = Math.floor(Math.random() * msgs.length);
-        msgElem.textContent = msgs[randomIndex];
-      }
-    }
-
-    // ----------------------------------------------------------------------
-    // 3. SEO 메타 태그 업데이트 (Naver/Google 공통)
-    // ----------------------------------------------------------------------
-function setMetaTag(attrType, attrName, content) {
-  // 백틱 대신 더하기 기호(+)를 사용하여 문자열 결합
-  let selector = 'meta[' + attrType + '="' + attrName + '"]';
-  
-  let meta = document.querySelector(selector);
-  if (!meta) {
-    meta = document.createElement('meta');
-    meta.setAttribute(attrType, attrName);
-    document.head.appendChild(meta);
+          "운영 시스템 안정화 완료",
+          "인덱싱 최적화 완료",
+          "데이터 무결성 검사 완료", 
+          "캐시 레이어 갱신",
+          "보안 프로토콜 활성화", 
+          "실시간 콘텐츠 동기화"
+    ];
+    document.getElementById('sync-status').textContent = statusMsgs[Math.floor(Math.random() * statusMsgs.length)];
   }
-  meta.content = content;
-}
 
-    function updateSeoMetaTags(data) {
-      // (A) Naver/Google 공통: Open Graph 수정일 (매우 중요)
-      setMetaTag('property', 'og:updated_time', data.isoDateTime);
-
-      // (B) Naver/Google 공통: Article 수정일 (Naver 웹문서 검색에 중요)
-      setMetaTag('property', 'article:modified_time', data.isoDateTime);
-
-      // (C) 일반 검색엔진(공통) 날짜 태그
-      setMetaTag('name', 'date', data.formattedDate);
-
-      // (D) 저작권 정보 갱신 (네이버 소유 확인 시 참고)
-      // ********** 변경된 부분: 백틱 대신 + 기호 사용 **********
-      setMetaTag('name', 'copyright', data.year + ' ' + document.title);
-    }
-
-    // ----------------------------------------------------------------------
-    // 4. [핵심 업그레이드] JSON-LD 구조화 데이터 삽입/업데이트
-    // ----------------------------------------------------------------------
-    function updateJsonLd(data) {
-      let script = document.querySelector('script[type="application/ld+json"]');
-      if (!script) {
-        script = document.createElement('script');
-        script.type = 'application/ld+json';
-        document.head.appendChild(script);
-      }
-
-      const jsonLdData = {
-        "@context": "https://schema.org",
-        "@type": "WebPage", 
-        "headline": document.title || window.location.hostname,
-        "dateModified": data.isoDateTime, 
-        "datePublished": data.isoDateTime, 
-        "name": document.title || window.location.hostname
-      };
-      
-      script.textContent = JSON.stringify(jsonLdData, null, 2);
-    }
-
-    // ----------------------------------------------------------------------
-    // 5. 실행
-    // ----------------------------------------------------------------------
-    const timeData = getFormattedKstTime();
-    updateFooter(timeData);
-    updateSeoMetaTags(timeData);
-    updateJsonLd(timeData);
-  })();
+  // 4. 실행 제어 (DOM 로드 후 실행)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      const data = getKstInfo();
+      updateUi(data);
+      updateSeoEngine(data);
+    });
+  } else {
+    const data = getKstInfo();
+    updateUi(data);
+    updateSeoEngine(data);
+  }
+})();
 </script>
-
 
 
 
